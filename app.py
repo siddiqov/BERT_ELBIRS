@@ -2,9 +2,11 @@ import os
 import streamlit as st
 import sqlite3
 import numpy as np
+from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings.openai import OpenAIEmbeddings
+from langchain_community.llms import OpenAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain_community.callbacks.manager import get_openai_callback
 from langchain.docstore.document import Document
@@ -20,7 +22,7 @@ import logging  # Import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load environment variables
-# load_dotenv()
+load_dotenv()
 
 # Initialize SpaCy for NER
 logging.info("Loading SpaCy model for NER...")
@@ -191,8 +193,9 @@ def process_pdfs(pdf_files, language):
 # Function to get the LLM based on user selection
 def get_llm(model_choice):
     logging.info(f"Getting LLM pipeline for model: {model_choice}")
-
-    if model_choice in ["BERT", "RoBERTa", "DistilBERT", "ALBERT"]:
+    if model_choice == "GPT":
+        return OpenAI(temperature=0)
+    elif model_choice in ["BERT", "RoBERTa", "DistilBERT", "ALBERT"]:
         model_name = {
             "BERT": "bert-base-uncased",
             "RoBERTa": "roberta-base",
@@ -259,7 +262,25 @@ def main():
 
                     context = " ".join(all_chunks)  # Combine all chunks into a single context
 
-                    if model_choice in ["BERT", "RoBERTa", "DistilBERT", "ALBERT"]:
+                    if model_choice == "GPT":
+                        llm = get_llm(model_choice)
+                        chain = load_qa_chain(llm=llm, chain_type="map_reduce")
+
+                        with get_openai_callback() as cb:
+                            if language == "Spanish":
+                                query = f"Por favor, responde en español: {query}"
+
+                            response = chain.run(input_documents=[Document(page_content=chunk) for chunk in all_chunks], question=query)
+                            st.markdown("---")
+                            st.subheader("Answer:")
+                            st.write(response)
+                            st.markdown("---")
+                            st.write(f"Total Tokens: {cb.total_tokens}")
+                            st.write(f"Prompt Tokens: {cb.prompt_tokens}")
+                            st.write(f"Completion Tokens: {cb.completion_tokens}")
+                            st.write(f"Total Cost (USD): ${cb.total_cost:.5f}")
+
+                    elif model_choice in ["BERT", "RoBERTa", "DistilBERT", "ALBERT"]:
                         bert_pipeline = get_llm(model_choice)
                         response = get_bert_response(bert_pipeline, context, query)
                         st.markdown("---")
