@@ -1,0 +1,45 @@
+
+
+1. Question: What discount do you receive when booking two rooms at the hotel?
+   Answer: When booking two rooms, you will receive 50% off the children’s room.
+
+2. Question: What type of events can the Ballroom at the hotel host?
+   Answer: The Ballroom can host a range of event styles including the most lavish banquet, wedding breakfast, or drinks receptions.
+
+3. Question: What performance can guests enjoy at Najma every Monday night?
+   Answer: Guests can enjoy a live DJ performance every Monday from 7.30 pm, followed by a belly dancer performance at 8 pm.
+
+4. Question: What are the ingredients in the HUMMUS BI TAHINEH starter?
+   Answer: The ingredients in the HUMMUS BI TAHINEH starter are classic hummus, sesame paste, lemon juice, olive oil, paprika, and mint.
+
+5. Question: What is the calorie count and price for the CRISPY HALLOUMI WITH HARISSA AIOLI from the NIBBLES section?
+   Answer: The CRISPY HALLOUMI WITH HARISSA AIOLI has 403 kcal and costs £10.
+
+6. Question: Describe the LAMB MERGUEZ starter.
+   Answer: The LAMB MERGUEZ starter includes lamb merguez sausage, pickled red onion, and mint tzatziki, and it costs £14.
+
+7. Question: What are the desserts offered at the hotel’s restaurant and their prices?
+   Answer: The desserts offered are:
+   HOMEMADE BAKLAVA BITES £12
+   STICKY DATE PUDDING £12
+   MAAMOUL WITH A TWIST £12
+   KUNAFA CHEESECAKE £12
+
+You can use these questions and answers to test the accuracy and effectiveness of your Q&A application.
+
+
+....................................
+1. Describe the features and amenities of the Junior Suites at the hotel. 
+corss check: https://parklane.intercontinental.com/stay/suites/junior-suites/
+
+2. How does Najma differ from other dining options
+
+corss check: https://parklane.intercontinental.com/dine/najma-lebanon/
+
+
+3. How does the Crystal Sound Bath differ from other
+
+https://parklane.intercontinental.com/spa/mindfulness-nights/
+
+
+
