@@ -1,0 +1,65 @@
+i have process_pdfs funciton "# Function to process PDF files
+def process_pdfs(pdf_files, language, vector_store_type):
+    conn = sqlite3.connect('my_database.db')
+    create_tables(conn)
+    logging.info(f"This is the section where we need to check the pdf is lready processed or not\n I am in process_pdfs with pdf_files {pdf_files}")
+    store_name = pdf.name[:-4]
+    all_chunks = []
+    all_vectors = []
+    all_indices = []
+
+    for pdf in pdf_files:
+        reader = PdfReader(pdf)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        
+        logging.info("Splitting text into chunks...")
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
+        chunks = text_splitter.split_text(text)
+
+        summarized_chunks = []
+        for chunk in chunks:
+            summarized_chunk = summarize_text_transformer(chunk, language)
+            summarized_chunks.append(summarized_chunk)
+        
+        logging.info(f"Summarized {len(summarized_chunks)} chunks")
+
+        store_name = pdf.name[:-4]
+        file_content = pdf.read()  # Corrected from pdf.getvalue()
+        document_hash = compute_hash(file_content)
+        #logging.info(f"PDF file content: {file_content}")
+        logging.info(f"Document Hash: {document_hash}, store_name  '{store_name}'")
+
+        if document_exists(conn, pdf.name, document_hash):
+            logging.info(f"Document exists in the database")
+            index, vectors = load_vector_store(store_name, vector_store_type)
+            logging.info(f"Loaded vector store for '{store_name}'")
+        else:
+            logging.info(f"Document doesn't exist in the database, creating a new one")
+            create_vector_store(summarized_chunks, store_name, vector_store_type)
+            save_document_metadata(conn, pdf.name, document_hash)
+            index, vectors = load_vector_store(store_name, vector_store_type)
+            logging.info(f"Created and loaded vector store for '{store_name}'")
+
+        # Log the results of load/create vector store
+        if vector_store_type == 'faiss':
+            if index is None or vectors is None:
+                logging.error(f"Failed to load/create vector store for '{store_name}'")
+
+        elif vector_store_type == 'elasticsearch':
+            if vectors is None:
+                logging.error(f"Failed to load/create vector store for '{store_name}'")        
+
+        all_chunks.extend(summarized_chunks)
+
+        all_vectors.extend(vectors)
+        all_indices.append(index)
+    
+    conn.close()
+    return store_name, all_chunks, all_indices, all_vectors"
+
+can i save these "store_name, document_hash, all_chunks, all_indices, all_vectors" sqlite when the pdf file is read fir
+time. every time when pdf file is chosen, the function process_pdfs first check the sqlite based on store_name and document_hash, , if it exist
+then it should fetch these tore_name, all_chunks, all_indices, all_vectors and return "return store_name, all_chunks, all_indices, all_vectors" if it doesnt exists then 
+do the default run of this funciton process_pdfs 

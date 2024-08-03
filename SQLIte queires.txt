@@ -1,0 +1,8 @@
+sqlite3 my_database.db
+
+-- List tables
+.tables
+
+-- Check schema of specific table
+.schema vector_store
+.schema document_metadata
