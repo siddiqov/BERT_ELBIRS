@@ -6,6 +6,10 @@ import numpy as np
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.chains.question_answering import load_qa_chain
+from langchain_community.callbacks.manager import get_openai_callback
+from langchain_community.llms import OpenAI
+from langchain.docstore.document import Document
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
 import faiss
@@ -91,9 +95,26 @@ def save_document_metadata(conn, document_name, document_hash):
     c = conn.cursor()
     c.execute('INSERT INTO document_metadata (document_name, document_hash) VALUES (?, ?)', (document_name, document_hash))
     conn.commit()
+
+# Function to get the LLM based on user selection
+def get_llm(model_choice):
+    #logging.info(f"Getting LLM pipeline for model: {model_choice}")
+    if model_choice == "GPT":
+        return OpenAI(temperature=0)
+    elif model_choice in ["BERT", "RoBERTa", "DistilBERT", "ALBERT"]:
+        model_name = {
+            "BERT": "bert-base-uncased",
+            "RoBERTa": "roberta-base",
+            "DistilBERT": "distilbert-base-uncased",
+            "ALBERT": "albert-base-v2"
+        }[model_choice]
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForQuestionAnswering.from_pretrained(model_name)
+        return pipeline("question-answering", model=model, tokenizer=tokenizer)
+    else:
+        raise ValueError("Invalid model choice")
     
 # Function to create vector store
-
 def create_vector_store(chunks, store_name, vector_store_type='faiss'):
     try:
         logging.info(f"Creating vector store for '{store_name}'...")
@@ -402,7 +423,7 @@ def main():
     st.sidebar.markdown("---")
 
     language = st.selectbox("Select Language", ["English", "Spanish"])
-    model_choice = st.selectbox("Select Model", ["BERT", "RoBERTa", "DistilBERT", "ALBERT"])
+    model_choice = st.selectbox("Select Model", ["BERT", "RoBERTa", "DistilBERT", "ALBERT", "GPT"])
     vector_store_type = st.selectbox("Select Vector Store", ["faiss", "elasticsearch"])
 
     with st.container():
@@ -411,6 +432,25 @@ def main():
             with st.spinner('Processing PDFs...'):
                 all_chunks, indices, vectors = process_pdfs(pdf_files, language, vector_store_type)
 
+            #................................
+            if model_choice == "GPT":
+                llm = get_llm(model_choice)
+                chain = load_qa_chain(llm=llm, chain_type="map_reduce")
+
+                with get_openai_callback() as cb:
+                    if language == "Spanish":
+                        query = f"Por favor, responde en español: {query}"
+
+                        response = chain.run(input_documents=[Document(page_content=chunk) for chunk in all_chunks], question=query)
+                        st.markdown("---")
+                        st.subheader("Answer:")
+                        st.write(response)
+                        st.markdown("---")
+                        st.write(f"Total Tokens: {cb.total_tokens}")
+                        st.write(f"Prompt Tokens: {cb.prompt_tokens}")
+                        st.write(f"Completion Tokens: {cb.completion_tokens}")
+                        st.write(f"Total Cost (USD): ${cb.total_cost:.5f}")            
+            #................................
             if np.size(vectors) > 0:  # Correct way to check if vectors array is not empty
                 query = st.text_input(f"How can I help you ({language}):")
                 logging.info(f"The user Question: {query}")
